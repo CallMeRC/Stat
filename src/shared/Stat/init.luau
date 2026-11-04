@@ -19,6 +19,14 @@ Stat.__index = Stat
 
 export type Stat = typeof(setmetatable({} :: StatParams, Stat))
 
+type ModeType = "Override" | "Flat" | "Percent"
+
+Stat.Mode = table.freeze({
+	Override = "Override" :: ModeType,
+	Flat = "Flat" :: ModeType,
+	Percent = "Percent" :: ModeType,
+})
+
 function Stat.new(BaseValue: number, Configuration: Config?): Stat
 	assert(typeof(BaseValue) == "number", "Stat.new expects a number")
 
@@ -34,6 +42,20 @@ function Stat.new(BaseValue: number, Configuration: Config?): Stat
 	self._trove:Add(self.Changed)
 
 	return setmetatable(self, Stat) :: any
+end
+
+function Stat.__call(
+	self: Stat,
+	Value: number?
+): number? -- Sets the base value if there is a value parameter set, gets the base value if there are no parameters set
+	if Value ~= nil then
+		local old = self._base
+		self._base = Value
+		self.Changed:Fire(old, Value)
+		return nil
+	else
+		return self._cached
+	end
 end
 
 function Stat.Destroy(self: Stat)
